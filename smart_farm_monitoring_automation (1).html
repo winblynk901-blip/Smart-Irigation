@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Farm Monitoring & Automation Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome untuk ikon presisi -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN for interactive visual graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        digital: ['Orbitron', 'monospace']
+                    },
+                    colors: {
+                        farm: {
+                            darkest: '#031412',
+                            dark: '#062421',
+                            card: '#0a2e2a',
+                            cardBorder: 'rgba(34, 197, 94, 0.25)',
+                            emeraldGlow: '#10b981',
+                            accentCyan: '#06b6d4',
+                            accentYellow: '#eab308',
+                            accentGreen: '#22c55e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Glowing & Aesthetic styles */
+        body {
+            background-color: #031412;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(6, 78, 59, 0.25) 0%, transparent 45%),
+                radial-gradient(circle at 85% 20%, rgba(13, 148, 136, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(5, 46, 22, 0.35) 0%, transparent 50%);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Panel Style */
+        .farm-panel {
+            background: linear-gradient(135deg, rgba(8, 44, 40, 0.75) 0%, rgba(3, 26, 24, 0.85) 100%);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(45, 212, 191, 0.22);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .farm-subcard {
+            background: linear-gradient(180deg, rgba(7, 39, 36, 0.7) 0%, rgba(4, 25, 23, 0.9) 100%);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
+        }
+
+        .cyan-glow-border {
+            border-color: rgba(6, 182, 212, 0.4);
+            box-shadow: 0 0 18px -4px rgba(6, 182, 212, 0.25), inset 0 0 12px rgba(6, 182, 212, 0.1);
+        }
+
+        .yellow-glow-border {
+            border-color: rgba(234, 179, 8, 0.4);
+            box-shadow: 0 0 18px -4px rgba(234, 179, 8, 0.25), inset 0 0 12px rgba(234, 179, 8, 0.1);
+        }
+
+        /* Water flow pipe animation */
+        @keyframes waterFlow {
+            0% { stroke-dashoffset: 60; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .water-flowing {
+            stroke-dasharray: 8 4;
+            animation: waterFlow 1.2s linear infinite;
+        }
+
+        /* Custom Wave at bottom of card */
+        .wave-glow {
+            background: radial-gradient(ellipse at bottom, rgba(6, 182, 212, 0.4) 0%, transparent 75%);
+        }
+        .yellow-wave-glow {
+            background: radial-gradient(ellipse at bottom, rgba(234, 179, 8, 0.35) 0%, transparent 75%);
+        }
+
+        /* Gauge progress styling */
+        .gauge-svg {
+            transform: rotate(-90deg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #031412;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #064e3b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans selection:bg-emerald-500 selection:text-white flex flex-col xl:flex-row">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="w-full xl:w-64 bg-farm-darkest/90 border-b xl:border-b-0 xl:border-r border-emerald-900/40 p-4 xl:p-6 flex flex-col justify-between shrink-0 z-30">
+        <div>
+            <!-- Logo Header -->
+            <div class="flex items-center gap-3 mb-8 px-2">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-green-500 to-emerald-300 p-0.5 shadow-lg shadow-emerald-950/60 flex items-center justify-center">
+                    <div class="w-full h-full bg-farm-darkest rounded-[14px] flex items-center justify-center">
+                        <i class="fa-solid fa-leaf text-2xl text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.7)]"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white leading-tight flex items-center gap-1">
+                        Smart<span class="text-emerald-400">Farm</span>
+                    </h1>
+                    <span class="text-[11px] font-medium tracking-wider text-emerald-300/70 uppercase">IoT Agriculture</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="space-y-1.5" id="sidebar-nav">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-medium shadow-lg shadow-emerald-950/80 border border-emerald-400/30 transition text-left">
+                    <i class="fa-solid fa-house text-lg w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('monitoring')" id="nav-monitoring" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-emerald-950/40 transition text-left">
+                    <i class="fa-solid fa-chart-column text-lg w-5 text-center"></i>
+                    <span>Monitoring</span>
+                </button>
+                <button onclick="switchTab('automation')" id="nav-automation" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-emerald-950/40 transition text-left">
+                    <i class="fa-solid fa-gear text-lg w-5 text-center"></i>
+                    <span>Automation</span>
+                </button>
+                <button onclick="switchTab('history')" id="nav-history" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-emerald-950/40 transition text-left">
+                    <i class="fa-solid fa-database text-lg w-5 text-center"></i>
+                    <span>Data History</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-emerald-950/40 transition text-left">
+                    <i class="fa-regular fa-file-lines text-lg w-5 text-center"></i>
+                    <span>Reports</span>
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-emerald-950/40 transition text-left">
+                    <i class="fa-solid fa-sliders text-lg w-5 text-center"></i>
+                    <span>Settings</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Decorative Bottom Illus -->
+        <div class="mt-8 pt-4 border-t border-emerald-900/30 hidden xl:block">
+            <div class="relative rounded-2xl overflow-hidden p-4 bg-gradient-to-b from-emerald-950/50 to-farm-darkest border border-emerald-800/30 text-center">
+                <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xl border border-emerald-500/20">
+                    <i class="fa-solid fa-seedling"></i>
+                </div>
+                <p class="text-xs text-emerald-200/90 font-medium">Sprinkler Cycle</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Next scheduled in 45m</p>
+                <div class="mt-3 w-full bg-emerald-950 rounded-full h-1.5 overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-1.5 rounded-full" style="width: 65%"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT AREA ==================== -->
+    <main class="flex-1 p-3 sm:p-5 md:p-7 overflow-y-auto max-w-[1720px] mx-auto w-full">
+        
+        <!-- ==================== SECTION 1: DASHBOARD (MAIN VIEW) ==================== -->
+        <section id="view-dashboard" class="space-y-6">
+            <!-- Top Hero Banner -->
+            <div class="relative w-full rounded-3xl overflow-hidden farm-panel border-emerald-500/30 p-6 md:p-8 min-h-[220px] flex flex-col justify-between shadow-2xl">
+                <!-- Background Image with Agriculture Landscape & Sunburst -->
+                <div class="absolute inset-0 z-0">
+                    <img 
+                        src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=1920&q=80" 
+                        alt="Smart Farming Landscape with irrigation" 
+                        class="w-full h-full object-cover object-center scale-105 filter brightness-[0.7] contrast-[1.1] saturate-[1.15]"
+                        onerror="this.src='https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1920&q=80'"
+                    />
+                    <!-- Gradient overlays for smooth integration and text readability -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-[#031c19]/95 via-[#031c19]/75 to-transparent"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#02100e] via-transparent to-[#041c19]/60"></div>
+                    <!-- Ambient water sprinkler effect sparkles -->
+                    <div class="absolute top-1/4 left-1/3 w-3 h-3 bg-white/60 rounded-full blur-[1px] animate-ping"></div>
+                    <div class="absolute top-1/3 left-1/2 w-2 h-2 bg-cyan-200/60 rounded-full blur-[1px] animate-pulse"></div>
+                </div>
+
+                <!-- Top Row: Title & Online Status -->
+                <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight drop-shadow-md">
+                            Smart Farm Monitoring & Automation
+                        </h2>
+                        <p class="text-emerald-200/90 font-medium text-xs sm:text-sm md:text-base mt-1 flex flex-wrap items-center gap-2 drop-shadow">
+                            <span>Real-Time Monitoring</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span>Irrigation Automation</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span>Efficient Farming</span>
+                        </p>
+                    </div>
+
+                    <!-- System Online Badge -->
+                    <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-950/80 border border-emerald-500/40 shadow-lg shadow-emerald-900/30 backdrop-blur-md">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-xs sm:text-sm font-semibold text-emerald-100">System Online</span>
+                        <i class="fa-solid fa-wifi text-emerald-400 text-xs ml-1"></i>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Smart Solar Hardware Specs & Live Clock Widget -->
+                <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 mt-6 pt-4">
+                    <!-- Solar station badge info -->
+                    <div class="flex items-center gap-3 bg-farm-darkest/70 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-emerald-500/20">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/30">
+                            <i class="fa-solid fa-solar-panel text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-[11px] text-slate-300 font-medium">Field Station Alpha</div>
+                            <div class="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-bolt text-yellow-400 text-[10px]"></i> Solar Active (98%)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clock & Date Card exactly as in template -->
+                    <div class="w-full sm:w-auto min-w-[280px] sm:min-w-[340px] bg-gradient-to-br from-farm-darkest/90 via-emerald-950/80 to-[#021d19]/90 backdrop-blur-xl border border-emerald-400/30 rounded-2xl p-4 shadow-xl">
+                        <div class="flex items-center justify-end text-emerald-300/80 text-xs font-medium gap-1.5 mb-2">
+                            <i class="fa-regular fa-calendar-days text-emerald-400"></i>
+                            <span id="current-date-text">Wednesday, Oct 30, 2026</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <!-- Clock Dial Icon with Glowing ring -->
+                            <div class="w-14 h-14 rounded-full border-2 border-emerald-400/60 bg-emerald-950/60 flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.3)] shrink-0">
+                                <i class="fa-regular fa-clock text-2xl text-emerald-400"></i>
+                            </div>
+                            <!-- Large Digital Time -->
+                            <div class="flex-1">
+                                <div class="flex items-baseline gap-2">
+                                    <span id="current-time-text" class="font-digital text-2xl sm:text-3xl font-extrabold text-white tracking-wider drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">
+                                        08:24:36
+                                    </span>
+                                    <span id="current-ampm-text" class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        AM
+                                    </span>
+                                </div>
+                                <span class="text-[11px] text-slate-400 tracking-wide">Current Time</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MIDDLE ROW: ENVIRONMENTAL CONDITIONS & SOIL MOISTURE -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- LEFT (7 cols): Environmental Conditions -->
+                <div class="lg:col-span-7 farm-panel rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-leaf text-xl text-emerald-400"></i>
+                            <h3 class="text-lg font-bold text-white tracking-wide">Environmental Conditions</h3>
+                        </div>
+                        <button id="refresh-env-btn" title="Simulasi data" class="text-xs px-2.5 py-1 rounded-lg bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrows-rotate text-[11px]"></i> Live Sync
+                        </button>
+                    </div>
+
+                    <!-- 3 Condition Cards in Row -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Card 1: Air Temperature & Air Humidity -->
+                        <div class="farm-subcard cyan-glow-border rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden group hover:border-cyan-400/60 transition duration-300">
+                            <div class="wave-glow absolute -bottom-6 left-0 right-0 h-16 pointer-events-none"></div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-950/60 flex items-center justify-center text-cyan-400 text-xl shrink-0 border border-cyan-500/20">
+                                    <i class="fa-solid fa-temperature-half"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-medium text-slate-300 block">Air Temperature</span>
+                                    <div class="text-xl sm:text-2xl font-bold text-white">
+                                        <span id="val-temperature">28.6</span> <span class="text-xs font-normal text-cyan-300">°C</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full h-px bg-cyan-900/40 my-3"></div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-950/60 flex items-center justify-center text-blue-400 text-xl shrink-0 border border-blue-500/20">
+                                    <i class="fa-solid fa-droplet"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-medium text-slate-300 block">Air Humidity</span>
+                                    <div class="text-xl sm:text-2xl font-bold text-white">
+                                        <span id="val-humidity">72</span> <span class="text-xs font-normal text-blue-300">%RH</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Wind Speed -->
+                        <div class="farm-subcard cyan-glow-border rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden group hover:border-cyan-400/60 transition duration-300">
+                            <div class="wave-glow absolute -bottom-6 left-0 right-0 h-16 pointer-events-none"></div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-xl bg-cyan-950/60 flex items-center justify-center text-cyan-400 text-2xl shrink-0 border border-cyan-500/20">
+                                    <i class="fa-solid fa-wind animate-pulse"></i>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-slate-300 block">Wind Speed</span>
+                                    <span class="text-[10px] text-emerald-400 flex items-center gap-1">
+                                        <i class="fa-solid fa-compass text-[9px]"></i> South-East
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="my-4 text-center">
+                                <div class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                                    <span id="val-wind">3.4</span> <span class="text-sm font-normal text-cyan-300">m/s</span>
+                                </div>
+                                <span class="text-[11px] text-slate-400 font-medium">Moderate Gentle Breeze</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-cyan-950/80 rounded-full overflow-hidden">
+                                <div id="wind-bar" class="h-full bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full transition-all duration-700" style="width: 48%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Solar Light Intensity -->
+                        <div class="farm-subcard yellow-glow-border rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden group hover:border-yellow-400/60 transition duration-300">
+                            <div class="yellow-wave-glow absolute -bottom-6 left-0 right-0 h-16 pointer-events-none"></div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-xl bg-yellow-950/60 flex items-center justify-center text-yellow-400 text-2xl shrink-0 border border-yellow-500/20">
+                                    <i class="fa-regular fa-sun text-yellow-400"></i>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-slate-300 block">Solar Light</span>
+                                    <span class="text-[10px] text-yellow-300/80 font-medium">Intensity Factor</span>
+                                </div>
+                            </div>
+                            <div class="my-4 text-center">
+                                <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                                    <span id="val-lux">76,500</span> <span class="text-xs font-normal text-yellow-300">lux</span>
+                                </div>
+                                <span class="text-[11px] text-yellow-200/80 font-medium flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i> Optimal Photosynthesis
+                                </span>
+                            </div>
+                            <div class="h-1.5 w-full bg-yellow-950/80 rounded-full overflow-hidden">
+                                <div id="lux-bar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full transition-all duration-700" style="width: 78%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT (5 cols): Soil Moisture -->
+                <div class="lg:col-span-5 farm-panel rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-seedling text-xl text-emerald-400"></i>
+                            <h3 class="text-lg font-bold text-white tracking-wide">Soil Moisture</h3>
+                        </div>
+                        <span class="text-xs text-slate-400">Capacitive V2.0</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Sensor 1 Card -->
+                        <div class="farm-subcard rounded-2xl p-4 flex flex-col items-center justify-between relative overflow-hidden border-emerald-500/30">
+                            <div class="w-full flex items-center justify-between mb-1">
+                                <span class="flex items-center gap-1.5 text-xs font-semibold text-emerald-300">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    Sensor 1
+                                </span>
+                                <span class="text-[10px] text-slate-400 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-800/40">Zone A</span>
+                            </div>
+                            <div class="relative w-40 h-28 flex items-end justify-center my-2">
+                                <svg class="w-36 h-36 gauge-svg" viewBox="0 0 120 120">
+                                    <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10" stroke-dasharray="150.79 301.59" stroke-linecap="round"/>
+                                    <circle id="gauge-circle-1" cx="60" cy="60" r="48" fill="none" stroke="#22c55e" stroke-width="10" 
+                                        stroke-dasharray="54.3 301.59" stroke-linecap="round" 
+                                        class="transition-all duration-1000 ease-out filter drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                </svg>
+                                <div class="absolute bottom-2 text-center">
+                                    <div class="text-2xl font-extrabold text-white">
+                                        <span id="soil-val-1">36</span><span class="text-sm font-semibold text-emerald-400">%</span>
+                                    </div>
+                                    <div class="text-[10px] uppercase tracking-wider text-slate-300 font-medium">Soil Moisture</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/30">
+                                    <i class="fa-solid fa-plant-wilt"></i>
+                                </div>
+                                <span class="text-[11px] text-emerald-200/90 font-medium">Slightly Dry (Normal)</span>
+                            </div>
+                        </div>
+
+                        <!-- Sensor 2 Card -->
+                        <div class="farm-subcard rounded-2xl p-4 flex flex-col items-center justify-between relative overflow-hidden border-emerald-500/30">
+                            <div class="w-full flex items-center justify-between mb-1">
+                                <span class="flex items-center gap-1.5 text-xs font-semibold text-emerald-300">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    Sensor 2
+                                </span>
+                                <span class="text-[10px] text-slate-400 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-800/40">Zone B</span>
+                            </div>
+                            <div class="relative w-40 h-28 flex items-end justify-center my-2">
+                                <svg class="w-36 h-36 gauge-svg" viewBox="0 0 120 120">
+                                    <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10" stroke-dasharray="150.79 301.59" stroke-linecap="round"/>
+                                    <circle id="gauge-circle-2" cx="60" cy="60" r="48" fill="none" stroke="#22c55e" stroke-width="10" 
+                                        stroke-dasharray="105.5 301.59" stroke-linecap="round" 
+                                        class="transition-all duration-1000 ease-out filter drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                </svg>
+                                <div class="absolute bottom-2 text-center">
+                                    <div class="text-2xl font-extrabold text-white">
+                                        <span id="soil-val-2">70</span><span class="text-sm font-semibold text-emerald-400">%</span>
+                                    </div>
+                                    <div class="text-[10px] uppercase tracking-wider text-slate-300 font-medium">Soil Moisture</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/30">
+                                    <i class="fa-solid fa-droplet-circle-check"></i>
+                                </div>
+                                <span class="text-[11px] text-emerald-300 font-medium">Optimal Moisture (Adequate)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM ROW: AUTOMATION & ACTUATOR STATUS + SYSTEM SUMMARY -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- LEFT (8 cols): Automation & Actuator Status -->
+                <div class="lg:col-span-8 farm-panel rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-gears text-xl text-emerald-400"></i>
+                            <h3 class="text-lg font-bold text-white tracking-wide">Automation & Actuator Status</h3>
+                        </div>
+                        <span class="text-xs text-slate-400 bg-emerald-950/70 border border-emerald-700/30 px-3 py-1 rounded-full">Relay 24V DC</span>
+                    </div>
+
+                    <!-- 3 Actuator Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Water Pump -->
+                        <div class="farm-subcard rounded-2xl p-4 flex flex-col justify-between border-emerald-500/30">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-200">Water Pump</span>
+                                <button id="btn-pump" onclick="toggleActuator('pump')" class="px-3.5 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-farm-darkest hover:bg-emerald-400 shadow-md shadow-emerald-500/30 transition">
+                                    ON
+                                </button>
+                            </div>
+                            <!-- Pump Graphic with flow pipe -->
+                            <div class="my-4 flex items-center justify-center">
+                                <div class="relative w-28 h-20 flex items-center justify-center">
+                                    <div class="w-16 h-14 rounded-xl bg-gradient-to-tr from-cyan-900 to-cyan-600 border border-cyan-400/50 shadow-[0_0_15px_rgba(6,182,212,0.4)] flex items-center justify-center text-cyan-100 text-2xl">
+                                        <i class="fa-solid fa-fan animate-spin text-xl text-cyan-200" style="animation-duration: 2s;" id="pump-icon"></i>
+                                    </div>
+                                    <!-- Pipe output with flowing water -->
+                                    <svg class="absolute bottom-1 -right-2 w-16 h-8" viewBox="0 0 60 30">
+                                        <path d="M 0 15 L 45 15 L 45 28" fill="none" stroke="#0e3f3a" stroke-width="6" stroke-linecap="round"/>
+                                        <path id="pump-water-path" d="M 0 15 L 45 15 L 45 28" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" class="water-flowing"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-center text-emerald-300 font-medium">Pressure: 2.8 Bar (Active)</div>
+                        </div>
+
+                        <!-- Solenoid Valve 1 -->
+                        <div class="farm-subcard rounded-2xl p-4 flex flex-col justify-between border-emerald-500/30">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-200">Solenoid Valve 1</span>
+                                <button id="btn-valve1" onclick="toggleActuator('valve1')" class="px-3.5 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-farm-darkest hover:bg-emerald-400 shadow-md shadow-emerald-500/30 transition">
+                                    ON
+                                </button>
+                            </div>
+                            <!-- Valve 1 Graphic -->
+                            <div class="my-4 flex items-center justify-center">
+                                <div class="relative w-28 h-20 flex items-center justify-center">
+                                    <div class="w-14 h-14 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-500 border border-slate-400/40 shadow-lg flex items-center justify-center text-white text-xl">
+                                        <i class="fa-solid fa-faucet-drip text-emerald-400" id="valve1-icon"></i>
+                                    </div>
+                                    <!-- Pipe output with flow -->
+                                    <svg class="absolute bottom-1 -right-2 w-16 h-8" viewBox="0 0 60 30">
+                                        <path d="M 0 15 L 45 15 L 45 28" fill="none" stroke="#0e3f3a" stroke-width="6" stroke-linecap="round"/>
+                                        <path id="valve1-water-path" d="M 0 15 L 45 15 L 45 28" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" class="water-flowing"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-center text-cyan-300 font-medium">Zone A: Irrigating (Dry Soil)</div>
+                        </div>
+
+                        <!-- Solenoid Valve 2 -->
+                        <div class="farm-subcard rounded-2xl p-4 flex flex-col justify-between border-slate-700/40">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-200">Solenoid Valve 2</span>
+                                <button id="btn-valve2" onclick="toggleActuator('valve2')" class="px-3.5 py-1 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition">
+                                    OFF
+                                </button>
+                            </div>
+                            <!-- Valve 2 Graphic -->
+                            <div class="my-4 flex items-center justify-center">
+                                <div class="relative w-28 h-20 flex items-center justify-center opacity-75">
+                                    <div class="w-14 h-14 rounded-xl bg-gradient-to-tr from-slate-800 to-slate-600 border border-slate-600/40 flex items-center justify-center text-slate-400 text-xl">
+                                        <i class="fa-solid fa-faucet text-slate-400" id="valve2-icon"></i>
+                                    </div>
+                                    <!-- Pipe without flow -->
+                                    <svg class="absolute bottom-1 -right-2 w-16 h-8" viewBox="0 0 60 30">
+                                        <path d="M 0 15 L 45 15 L 45 28" fill="none" stroke="#0e3f3a" stroke-width="6" stroke-linecap="round"/>
+                                        <path id="valve2-water-path" d="M 0 15 L 45 15 L 45 28" fill="none" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-center text-emerald-400/80 font-medium">Zone B: Standby (Moisture 70%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT (4 cols): System Summary -->
+                <div class="lg:col-span-4 farm-panel rounded-3xl p-5 sm:p-6 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-clipboard-check text-xl text-emerald-400"></i>
+                            <h3 class="text-lg font-bold text-white tracking-wide">System Summary</h3>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-farm-darkest/60 border border-emerald-900/40">
+                            <span class="flex items-center gap-2.5 text-xs text-slate-300">
+                                <i class="fa-solid fa-droplet text-cyan-400 text-sm"></i>
+                                Irrigation Status
+                            </span>
+                            <span id="summary-irrigation" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                Running
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-farm-darkest/60 border border-emerald-900/40">
+                            <span class="flex items-center gap-2.5 text-xs text-slate-300">
+                                <i class="fa-solid fa-robot text-emerald-400 text-sm"></i>
+                                Automation Mode
+                            </span>
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                Auto
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-farm-darkest/60 border border-emerald-900/40">
+                            <span class="flex items-center gap-2.5 text-xs text-slate-300">
+                                <i class="fa-solid fa-signal text-emerald-400 text-sm"></i>
+                                Connection
+                            </span>
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Online
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-farm-darkest/60 border border-emerald-900/40">
+                            <span class="flex items-center gap-2.5 text-xs text-slate-300">
+                                <i class="fa-solid fa-bolt text-yellow-400 text-sm"></i>
+                                System Power
+                            </span>
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                Normal
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 2: MONITORING VIEW ==================== -->
+        <section id="view-monitoring" class="space-y-6 hidden">
+            <!-- Header Monitoring -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 farm-panel rounded-2xl p-5">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-emerald-400"></i> IoT Real-Time Analytics & Sensor Telemetry
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">Pantau tren sensor kelembaban tanah, suhu lingkungan, dan performa node sensor di tiap zona.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="updateMonitoringRange('24h')" class="chart-filter-btn px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white font-medium border border-emerald-400/40">24 Jam</button>
+                    <button onclick="updateMonitoringRange('7d')" class="chart-filter-btn px-3 py-1.5 text-xs rounded-lg bg-farm-darkest text-slate-300 hover:text-white border border-emerald-800/40">7 Hari</button>
+                    <button onclick="updateMonitoringRange('30d')" class="chart-filter-btn px-3 py-1.5 text-xs rounded-lg bg-farm-darkest text-slate-300 hover:text-white border border-emerald-800/40">30 Hari</button>
+                </div>
+            </div>
+
+            <!-- Graphs Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Grafik 1: Kelembaban Tanah Sensor 1 & 2 -->
+                <div class="farm-panel rounded-3xl p-5 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-droplet text-emerald-400"></i> Soil Moisture Dynamics (Zone A vs Zone B)
+                            </h3>
+                            <p class="text-[11px] text-slate-400">Kelembaban tanah saat ini: Sensor 1 (36% - Perlu Air) | Sensor 2 (70% - Lembab)</p>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-700/40">Real-time Stream</span>
+                    </div>
+                    <div class="w-full h-72">
+                        <canvas id="soilChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Grafik 2: Suhu Udara vs Kelembaban Udara -->
+                <div class="farm-panel rounded-3xl p-5 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-sun text-cyan-400"></i> Microclimate Trends (Temp & Humidity)
+                            </h3>
+                            <p class="text-[11px] text-slate-400">Korelasi suhu ambien 28.6°C dan kelembaban 72% RH</p>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded-md bg-cyan-950 text-cyan-300 border border-cyan-700/40">DHT22 Telemetry</span>
+                    </div>
+                    <div class="w-full h-72">
+                        <canvas id="climateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Node Sensor Grid Status -->
+            <div class="farm-panel rounded-3xl p-5">
+                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-emerald-400"></i> Active Field Sensor Nodes & Health
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="p-4 rounded-2xl bg-farm-darkest/70 border border-emerald-800/40">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-white">Node A-1 (Zone A)</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Active</span>
+                        </div>
+                        <div class="text-xl font-bold text-emerald-400">36% <span class="text-xs text-slate-400">Moisture</span></div>
+                        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+                            <span>Battery: 94%</span>
+                            <span>RSSI: -62 dBm</span>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-farm-darkest/70 border border-emerald-800/40">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-white">Node B-2 (Zone B)</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Active</span>
+                        </div>
+                        <div class="text-xl font-bold text-emerald-400">70% <span class="text-xs text-slate-400">Moisture</span></div>
+                        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+                            <span>Battery: 99%</span>
+                            <span>RSSI: -58 dBm</span>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-farm-darkest/70 border border-emerald-800/40">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-white">Solar Station Alpha</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">Generating</span>
+                        </div>
+                        <div class="text-xl font-bold text-yellow-300">76.5 klux <span class="text-xs text-slate-400">Sunlight</span></div>
+                        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+                            <span>Output: 12.6V</span>
+                            <span>Temp: 31°C</span>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-farm-darkest/70 border border-emerald-800/40">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-white">Anemometer Tower</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Calibrated</span>
+                        </div>
+                        <div class="text-xl font-bold text-cyan-300">3.4 m/s <span class="text-xs text-slate-400">Gentle</span></div>
+                        <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+                            <span>Gust: 5.1 m/s</span>
+                            <span>Dir: 135° SE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 3: AUTOMATION VIEW ==================== -->
+        <section id="view-automation" class="space-y-6 hidden">
+            <div class="farm-panel rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-microchip text-emerald-400"></i> Smart Irrigation Automation Engine
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">Konfigurasikan batas ambang penyiraman otomatis dan jadwal siklus timer pompa.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-slate-300">Master Control:</span>
+                    <button id="master-auto-toggle" onclick="toggleMasterAuto()" class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-500 text-farm-darkest flex items-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-power-off"></i> AUTO MODE ACTIVE
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Automation Rule 1 (Zone A) -->
+                <div class="farm-panel rounded-3xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-emerald-900/40 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">1</div>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Zone A Rule (Sensor 1)</h3>
+                                <p class="text-xs text-slate-400">Solenoid Valve 1 & Main Pump</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">TRIGGERED (Active)</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Kondisi Pemicu:</span>
+                            <span class="font-mono text-emerald-300 font-semibold">Kelembaban Tanah &lt; 40%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Nilai Saat Ini:</span>
+                            <span class="font-mono text-yellow-400 font-bold">36% (Kering)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Target Berhenti:</span>
+                            <span class="font-mono text-cyan-300">Mencapai 65%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Durasi Maksimum Irigasi:</span>
+                            <span class="text-white">15 Menit / Siklus</span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-emerald-900/40 flex items-center justify-between">
+                        <span class="text-xs text-emerald-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> Katup 1 menyala otomatis menyiram tanah kering.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Automation Rule 2 (Zone B) -->
+                <div class="farm-panel rounded-3xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-emerald-900/40 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-slate-700/40 flex items-center justify-center text-slate-300 font-bold">2</div>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Zone B Rule (Sensor 2)</h3>
+                                <p class="text-xs text-slate-400">Solenoid Valve 2</p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 text-xs rounded-full bg-slate-700 text-slate-300">STANDBY (Cut-off)</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Kondisi Pemicu:</span>
+                            <span class="font-mono text-slate-300 font-semibold">Kelembaban Tanah &lt; 40%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Nilai Saat Ini:</span>
+                            <span class="font-mono text-emerald-400 font-bold">70% (Lembab Cukup)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Target Berhenti:</span>
+                            <span class="font-mono text-cyan-300">Mencapai 65%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Status Aktuator:</span>
+                            <span class="text-slate-400">OFF (Mencegah Over-Watering)</span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-emerald-900/40 flex items-center justify-between">
+                        <span class="text-xs text-slate-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved text-emerald-400"></i> Perlindungan kelembaban berlebih aktif.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Scheduled Timers -->
+            <div class="farm-panel rounded-3xl p-6">
+                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-emerald-400"></i> Smart Scheduled Irrigation Times
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-2xl bg-farm-darkest/70 border border-emerald-800/40 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 block">Siklus Pagi</span>
+                            <span class="text-lg font-bold text-white">06:00 - 06:20 AM</span>
+                            <span class="text-[11px] text-emerald-400 block mt-1">Selesai (Efisiensi 98%)</span>
+                        </div>
+                        <i class="fa-solid fa-check-double text-emerald-400 text-xl"></i>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-farm-darkest/70 border border-emerald-800/40 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 block">Siklus Siang (Adaptive)</span>
+                            <span class="text-lg font-bold text-white">12:30 - 12:45 PM</span>
+                            <span class="text-[11px] text-yellow-300 block mt-1">Kondisional (Jika Lux &gt; 80k)</span>
+                        </div>
+                        <i class="fa-solid fa-sun text-yellow-400 text-xl"></i>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-farm-darkest/70 border border-emerald-800/40 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 block">Siklus Sore</span>
+                            <span class="text-lg font-bold text-white">17:15 - 17:35 PM</span>
+                            <span class="text-[11px] text-cyan-300 block mt-1">Menunggu Jadwal</span>
+                        </div>
+                        <i class="fa-regular fa-hourglass-half text-cyan-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 4: DATA HISTORY VIEW ==================== -->
+        <section id="view-history" class="space-y-6 hidden">
+            <!-- Header with Search & Filter -->
+            <div class="farm-panel rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-database text-emerald-400"></i> Telemetry & Actuator Data History
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">Daftar rekaman log data sensor per 10 menit tersimpan di Cloud Database.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-60">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        <input id="history-search" oninput="filterHistoryTable()" type="text" placeholder="Cari zona, nilai, status..." class="w-full bg-farm-darkest/90 border border-emerald-700/40 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-400" />
+                    </div>
+                    <button onclick="exportHistoryCSV()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="farm-panel rounded-3xl p-5 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="text-[11px] uppercase tracking-wider text-emerald-300/80 bg-farm-darkest/80 border-b border-emerald-800/40">
+                            <tr>
+                                <th class="p-3.5">Timestamp</th>
+                                <th class="p-3.5">Zone / Sensor</th>
+                                <th class="p-3.5">Soil Moisture</th>
+                                <th class="p-3.5">Air Temp</th>
+                                <th class="p-3.5">Air Humidity</th>
+                                <th class="p-3.5">Solar Lux</th>
+                                <th class="p-3.5">Pump & Valve Status</th>
+                                <th class="p-3.5">Action Taken</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-emerald-950/60 font-mono">
+                            <!-- Rows rendered via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Terminal Live IoT Logs -->
+            <div class="farm-panel rounded-2xl p-4 bg-black/60 font-mono text-xs text-emerald-400 space-y-1">
+                <div class="flex items-center justify-between text-slate-400 pb-2 border-b border-emerald-950">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-terminal text-emerald-400"></i> ESP32 MQTT Gateway Live Log
+                    </span>
+                    <span class="text-[10px] text-emerald-500">Connected to mqtt://broker.smartfarm.local:1883</span>
+                </div>
+                <div id="live-console" class="h-28 overflow-y-auto space-y-1 pt-2 text-[11px] select-text">
+                    <p>[08:24:36] [MQTT-SUB] Topic 'farm/zoneA/moisture': 36.2% -> Threshold LOW detected</p>
+                    <p>[08:24:36] [ACTUATOR] Water Pump turned [ON], Valve 1 turned [ON]</p>
+                    <p>[08:24:34] [MQTT-SUB] Topic 'farm/zoneB/moisture': 70.1% -> Target reached, Valve 2 kept [OFF]</p>
+                    <p>[08:24:30] [BATTERY] Solar Panel input 12.6V, Battery Charge 98% Normal</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 5: REPORTS VIEW ==================== -->
+        <section id="view-reports" class="space-y-6 hidden">
+            <div class="farm-panel rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-regular fa-file-lines text-emerald-400"></i> Agronomy & Resource Efficiency Reports
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">Laporan komprehensif penghematan air, penggunaan energi hijau, dan estimasi hasil panen.</p>
+                </div>
+                <button onclick="downloadReportSummary()" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i> Download Full PDF Report
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Water Consumption Card -->
+                <div class="farm-panel rounded-3xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs text-slate-300 font-semibold">Total Water Consumed</span>
+                        <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                            <i class="fa-solid fa-faucet"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-extrabold text-white">1,420 <span class="text-sm font-normal text-cyan-300">Liters</span></div>
+                    <div class="mt-2 text-xs text-emerald-400 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-down"></i> 32% lebih hemat dari irigasi konvensional
+                    </div>
+                </div>
+
+                <!-- Solar Power Yield -->
+                <div class="farm-panel rounded-3xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs text-slate-300 font-semibold">Solar Power Generated</span>
+                        <div class="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-extrabold text-white">4.82 <span class="text-sm font-normal text-yellow-300">kWh</span></div>
+                    <div class="mt-2 text-xs text-emerald-400 flex items-center gap-1">
+                        <i class="fa-solid fa-leaf"></i> 100% Off-grid self-sustaining
+                    </div>
+                </div>
+
+                <!-- Crop Health Index -->
+                <div class="farm-panel rounded-3xl p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs text-slate-300 font-semibold">Normalized Crop Index (NDVI)</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                            <i class="fa-solid fa-seedling"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-extrabold text-emerald-400">0.86 <span class="text-sm font-normal text-white">/ 1.0</span></div>
+                    <div class="mt-2 text-xs text-emerald-300 flex items-center gap-1">
+                        <i class="fa-solid fa-check"></i> Kondisi tajuk tanaman sangat sehat
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Breakdown -->
+            <div class="farm-panel rounded-3xl p-6">
+                <h3 class="text-base font-bold text-white mb-4">Weekly Irrigation Optimization Summary</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>Zone A (Vegetables Plot) - Water Balance</span>
+                            <span class="text-emerald-400 font-semibold">88% (Adequate)</span>
+                        </div>
+                        <div class="w-full bg-emerald-950/80 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-2 rounded-full" style="width: 88%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>Zone B (Fruit Orchard Plot) - Water Balance</span>
+                            <span class="text-emerald-400 font-semibold">96% (Optimal Moisture)</span>
+                        </div>
+                        <div class="w-full bg-emerald-950/80 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-2 rounded-full" style="width: 96%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 6: SETTINGS VIEW ==================== -->
+        <section id="view-settings" class="space-y-6 hidden">
+            <div class="farm-panel rounded-2xl p-5">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-emerald-400"></i> Hardware & IoT Gateway Settings
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-300 mt-1">Pengaturan ambang batas sensor, jaringan LoRaWAN/WiFi, dan kalibrasi ADC.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Sensor Calibration Form -->
+                <div class="farm-panel rounded-3xl p-6 space-y-4">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-compass-drafting text-emerald-400"></i> Sensor Moisture Calibration
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-300 block mb-1">Threshold Auto-ON (Zone A & B)</label>
+                            <input type="number" value="40" class="w-full bg-farm-darkest border border-emerald-800/60 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-400" />
+                            <span class="text-[10px] text-slate-400">Pompa & katup menyala otomatis bila kelembaban di bawah nilai ini (saat ini Sensor 1: 36%).</span>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-300 block mb-1">Threshold Cut-Off Auto-OFF</label>
+                            <input type="number" value="65" class="w-full bg-farm-darkest border border-emerald-800/60 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-400" />
+                            <span class="text-[10px] text-slate-400">Katup akan ditutup saat tanah mencapai angka ini (Sensor 2: 70% sudah di atas ambang ini).</span>
+                        </div>
+                    </div>
+                    <button onclick="showNotification('Pengaturan sensor berhasil disimpan!')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition">
+                        Simpan Kalibrasi
+                    </button>
+                </div>
+
+                <!-- Network Gateway Configuration -->
+                <div class="farm-panel rounded-3xl p-6 space-y-4">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-wifi text-emerald-400"></i> IoT MQTT Broker Connection
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-slate-300 block mb-1">Broker Address</label>
+                            <input type="text" value="mqtt://broker.smartfarm.local" class="w-full bg-farm-darkest border border-emerald-800/60 rounded-xl px-3 py-2 text-sm text-white font-mono" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-slate-300 block mb-1">Port</label>
+                                <input type="number" value="1883" class="w-full bg-farm-darkest border border-emerald-800/60 rounded-xl px-3 py-2 text-sm text-white font-mono" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-300 block mb-1">QoS Level</label>
+                                <input type="number" value="1" class="w-full bg-farm-darkest border border-emerald-800/60 rounded-xl px-3 py-2 text-sm text-white font-mono" />
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="showNotification('Koneksi MQTT berhasil diverifikasi!')" class="w-full py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-xl text-xs font-bold transition">
+                        Test Connection
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast Popup -->
+    <div id="toast-notify" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="farm-panel px-4 py-3 rounded-2xl flex items-center gap-3 border border-emerald-400/40 shadow-2xl">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+            <span id="toast-message" class="text-xs sm:text-sm text-white font-medium">Sistem diperbarui.</span>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        // State data
+        const actuators = {
+            pump: true,
+            valve1: true,
+            valve2: false
+        };
+
+        let autoModeActive = true;
+        let soilChartInstance = null;
+        let climateChartInstance = null;
+
+        // Mock History Data
+        const historyData = [
+            { time: "08:24:36", zone: "Zone A (Sensor 1)", soil: "36%", temp: "28.6°C", hum: "72%", lux: "76,500", act: "Pump ON, Valve 1 ON", status: "Irrigating" },
+            { time: "08:24:34", zone: "Zone B (Sensor 2)", soil: "70%", temp: "28.6°C", hum: "72%", lux: "76,500", act: "Valve 2 OFF", status: "Sufficient Moisture" },
+            { time: "08:14:20", zone: "Zone A (Sensor 1)", soil: "34%", temp: "28.4°C", hum: "73%", lux: "74,200", act: "Pump ON, Valve 1 ON", status: "Irrigating" },
+            { time: "08:04:15", zone: "Zone B (Sensor 2)", soil: "69%", temp: "28.1°C", hum: "75%", lux: "71,000", act: "Valve 2 OFF", status: "Standby" },
+            { time: "07:54:10", zone: "Zone A (Sensor 1)", soil: "33%", temp: "27.8°C", hum: "77%", lux: "68,000", act: "Pump ON, Valve 1 ON", status: "Low Moisture Triggered" },
+            { time: "07:44:02", zone: "Zone B (Sensor 2)", soil: "70%", temp: "27.5°C", hum: "79%", lux: "62,500", act: "Valve 2 OFF", status: "Optimal" },
+            { time: "07:34:00", zone: "Zone A (Sensor 1)", soil: "32%", temp: "27.2°C", hum: "80%", lux: "55,000", act: "Pump ON, Valve 1 ON", status: "Auto Cycle Start" }
+        ];
+
+        // Real-Time Clock
+        function updateClock() {
+            const now = new Date();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            const dayName = days[now.getDay()];
+            const monthName = months[now.getMonth()];
+            const dateNum = now.getDate();
+            const year = now.getFullYear();
+
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            const formattedHours = String(hours).padStart(2, '0');
+
+            const dateStr = `${dayName}, ${monthName} ${dateNum}, ${year}`;
+            const timeStr = `${formattedHours}:${minutes}:${seconds}`;
+
+            const dateEl = document.getElementById('current-date-text');
+            const timeEl = document.getElementById('current-time-text');
+            const ampmEl = document.getElementById('current-ampm-text');
+
+            if (dateEl) dateEl.innerText = dateStr;
+            if (timeEl) timeEl.innerText = timeStr;
+            if (ampmEl) ampmEl.innerText = ampm;
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Switch Navigation Tabs (SPA Mode)
+        function switchTab(viewId) {
+            const views = ['dashboard', 'monitoring', 'automation', 'history', 'reports', 'settings'];
+            
+            views.forEach(v => {
+                const sec = document.getElementById(`view-${v}`);
+                const nav = document.getElementById(`nav-${v}`);
+                if (sec) {
+                    if (v === viewId) {
+                        sec.classList.remove('hidden');
+                    } else {
+                        sec.classList.add('hidden');
+                    }
+                }
+                if (nav) {
+                    if (v === viewId) {
+                        nav.className = "nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-medium shadow-lg shadow-emerald-950/80 border border-emerald-400/30 transition text-left";
+                    } else {
+                        nav.className = "nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-emerald-950/40 transition text-left";
+                    }
+                }
+            });
+
+            // Initialize or render charts if switched to monitoring
+            if (viewId === 'monitoring') {
+                setTimeout(initMonitoringCharts, 50);
+            } else if (viewId === 'history') {
+                renderHistoryTable();
+            }
+        }
+
+        // Toggle Actuators with visual sync
+        function toggleActuator(type) {
+            actuators[type] = !actuators[type];
+            const isOn = actuators[type];
+
+            if (type === 'pump') {
+                const btn = document.getElementById('btn-pump');
+                const path = document.getElementById('pump-water-path');
+                const icon = document.getElementById('pump-icon');
+                if (isOn) {
+                    btn.className = "px-3.5 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-farm-darkest hover:bg-emerald-400 shadow-md shadow-emerald-500/30 transition";
+                    btn.innerText = "ON";
+                    path.setAttribute('stroke', '#38bdf8');
+                    path.classList.add('water-flowing');
+                    if (icon) icon.classList.add('animate-spin');
+                } else {
+                    btn.className = "px-3.5 py-1 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition";
+                    btn.innerText = "OFF";
+                    path.setAttribute('stroke', '#1e293b');
+                    path.classList.remove('water-flowing');
+                    if (icon) icon.classList.remove('animate-spin');
+                }
+            } else if (type === 'valve1') {
+                const btn = document.getElementById('btn-valve1');
+                const path = document.getElementById('valve1-water-path');
+                const icon = document.getElementById('valve1-icon');
+                if (isOn) {
+                    btn.className = "px-3.5 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-farm-darkest hover:bg-emerald-400 shadow-md shadow-emerald-500/30 transition";
+                    btn.innerText = "ON";
+                    path.setAttribute('stroke', '#38bdf8');
+                    path.classList.add('water-flowing');
+                    if (icon) icon.className = "fa-solid fa-faucet-drip text-emerald-400";
+                } else {
+                    btn.className = "px-3.5 py-1 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition";
+                    btn.innerText = "OFF";
+                    path.setAttribute('stroke', '#1e293b');
+                    path.classList.remove('water-flowing');
+                    if (icon) icon.className = "fa-solid fa-faucet text-slate-400";
+                }
+            } else if (type === 'valve2') {
+                const btn = document.getElementById('btn-valve2');
+                const path = document.getElementById('valve2-water-path');
+                const icon = document.getElementById('valve2-icon');
+                if (isOn) {
+                    btn.className = "px-3.5 py-1 text-xs font-bold rounded-lg bg-emerald-500 text-farm-darkest hover:bg-emerald-400 shadow-md shadow-emerald-500/30 transition";
+                    btn.innerText = "ON";
+                    path.setAttribute('stroke', '#38bdf8');
+                    path.classList.add('water-flowing');
+                    if (icon) icon.className = "fa-solid fa-faucet-drip text-emerald-400";
+                } else {
+                    btn.className = "px-3.5 py-1 text-xs font-bold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition";
+                    btn.innerText = "OFF";
+                    path.setAttribute('stroke', '#1e293b');
+                    path.classList.remove('water-flowing');
+                    if (icon) icon.className = "fa-solid fa-faucet text-slate-400";
+                }
+            }
+
+            // Sync Summary text
+            const irrigationSummary = document.getElementById('summary-irrigation');
+            if (irrigationSummary) {
+                if (actuators.pump && (actuators.valve1 || actuators.valve2)) {
+                    irrigationSummary.innerText = "Running";
+                    irrigationSummary.className = "px-2.5 py-1 text-xs font-semibold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                } else {
+                    irrigationSummary.innerText = "Standby";
+                    irrigationSummary.className = "px-2.5 py-1 text-xs font-semibold rounded-md bg-yellow-500/20 text-yellow-300 border border-yellow-500/30";
+                }
+            }
+
+            showNotification(`Status ${type.toUpperCase()} diubah ke ${isOn ? 'ON' : 'OFF'}`);
+        }
+
+        // Master Auto toggle
+        function toggleMasterAuto() {
+            autoModeActive = !autoModeActive;
+            const btn = document.getElementById('master-auto-toggle');
+            if (autoModeActive) {
+                btn.className = "px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-500 text-farm-darkest flex items-center gap-2 shadow-lg";
+                btn.innerHTML = `<i class="fa-solid fa-power-off"></i> AUTO MODE ACTIVE`;
+                showNotification("Otomasi irigasi beralih ke Mode OTOMATIS");
+            } else {
+                btn.className = "px-3.5 py-1.5 text-xs font-bold rounded-xl bg-amber-500 text-slate-900 flex items-center gap-2 shadow-lg";
+                btn.innerHTML = `<i class="fa-solid fa-hand"></i> MANUAL OVERRIDE`;
+                showNotification("Otomasi irigasi beralih ke Mode MANUAL");
+            }
+        }
+
+        // Render History Table
+        function renderHistoryTable(filterKeyword = "") {
+            const tbody = document.getElementById('history-table-body');
+            if (!tbody) return;
+
+            const filtered = historyData.filter(item => {
+                const text = `${item.time} ${item.zone} ${item.soil} ${item.act} ${item.status}`.toLowerCase();
+                return text.includes(filterKeyword.toLowerCase());
+            });
+
+            tbody.innerHTML = filtered.map(row => `
+                <tr class="hover:bg-emerald-950/40 transition">
+                    <td class="p-3.5 text-slate-400">${row.time}</td>
+                    <td class="p-3.5 font-sans font-medium text-white">${row.zone}</td>
+                    <td class="p-3.5 font-bold ${parseInt(row.soil) < 40 ? 'text-amber-400' : 'text-emerald-400'}">${row.soil}</td>
+                    <td class="p-3.5 text-cyan-300">${row.temp}</td>
+                    <td class="p-3.5 text-blue-300">${row.hum}</td>
+                    <td class="p-3.5 text-yellow-300">${row.lux}</td>
+                    <td class="p-3.5 text-slate-300 font-sans">${row.act}</td>
+                    <td class="p-3.5">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-sans font-semibold ${row.status.includes('Irrigating') || row.status.includes('Low') ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                            ${row.status}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterHistoryTable() {
+            const input = document.getElementById('history-search');
+            renderHistoryTable(input.value);
+        }
+
+        // Export history as CSV
+        function exportHistoryCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Timestamp,Zone,Soil Moisture,Air Temp,Air Humidity,Solar Lux,Actuators,Status\n";
+            historyData.forEach(row => {
+                csvContent += `"${row.time}","${row.zone}","${row.soil}","${row.temp}","${row.hum}","${row.lux}","${row.act}","${row.status}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `smartfarm_history_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showNotification("Data riwayat CSV berhasil diunduh!");
+        }
+
+        function downloadReportSummary() {
+            showNotification("Laporan performa pertanian (PDF Summary) sedang diproses...");
+        }
+
+        // Initialize Monitoring Charts with Chart.js
+        function initMonitoringCharts() {
+            if (soilChartInstance) soilChartInstance.destroy();
+            if (climateChartInstance) climateChartInstance.destroy();
+
+            // Chart 1: Soil Moisture (Sensor 1 vs Sensor 2)
+            const ctxSoil = document.getElementById('soilChart');
+            if (ctxSoil) {
+                soilChartInstance = new Chart(ctxSoil, {
+                    type: 'line',
+                    data: {
+                        labels: ['02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '08:25'],
+                        datasets: [
+                            {
+                                label: 'Sensor 1 (Zone A)',
+                                data: [55, 52, 48, 44, 40, 38, 35, 36],
+                                borderColor: '#eab308',
+                                backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                                fill: true,
+                                tension: 0.35,
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#eab308'
+                            },
+                            {
+                                label: 'Sensor 2 (Zone B)',
+                                data: [78, 77, 75, 74, 72, 71, 70, 70],
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                fill: true,
+                                tension: 0.35,
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#10b981'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 100,
+                                ticks: { color: '#64748b', callback: v => v + '%' },
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                            },
+                            x: {
+                                ticks: { color: '#64748b' },
+                                grid: { color: 'rgba(255, 255, 255, 0.03)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 2: Climate (Air Temp & Humidity)
+            const ctxClimate = document.getElementById('climateChart');
+            if (ctxClimate) {
+                climateChartInstance = new Chart(ctxClimate, {
+                    type: 'line',
+                    data: {
+                        labels: ['02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '08:25'],
+                        datasets: [
+                            {
+                                label: 'Air Temp (°C)',
+                                data: [24.1, 23.8, 23.5, 24.2, 25.5, 26.8, 27.9, 28.6],
+                                borderColor: '#ef4444',
+                                backgroundColor: 'transparent',
+                                tension: 0.3,
+                                borderWidth: 2,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Air Humidity (%RH)',
+                                data: [86, 88, 89, 85, 82, 78, 75, 72],
+                                borderColor: '#06b6d4',
+                                backgroundColor: 'transparent',
+                                tension: 0.3,
+                                borderWidth: 2,
+                                borderDash: [4, 4],
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                position: 'left',
+                                ticks: { color: '#ef4444', callback: v => v + '°C' },
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                position: 'right',
+                                ticks: { color: '#06b6d4', callback: v => v + '%' },
+                                grid: { drawOnChartArea: false }
+                            },
+                            x: {
+                                ticks: { color: '#64748b' },
+                                grid: { color: 'rgba(255, 255, 255, 0.03)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateMonitoringRange(range) {
+            showNotification(`Menampilkan telemetry rentang waktu: ${range}`);
+        }
+
+        // Notification Helper
+        function showNotification(msg) {
+            const toast = document.getElementById('toast-notify');
+            const toastMsg = document.getElementById('toast-message');
+            if (toast && toastMsg) {
+                toastMsg.innerText = msg;
+                toast.classList.remove('translate-y-24', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-24', 'opacity-0');
+                }, 3000);
+            }
+        }
+
+        // Live Simulated slight fluctuations on live sync button
+        const refreshEnvBtn = document.getElementById('refresh-env-btn');
+        if (refreshEnvBtn) {
+            refreshEnvBtn.addEventListener('click', () => {
+                const temp = (28.4 + Math.random() * 0.5).toFixed(1);
+                const hum = Math.floor(70 + Math.random() * 4);
+                const wind = (3.1 + Math.random() * 0.8).toFixed(1);
+
+                document.getElementById('val-temperature').innerText = temp;
+                document.getElementById('val-humidity').innerText = hum;
+                document.getElementById('val-wind').innerText = wind;
+
+                showNotification("Telemetry sensor berhasil disinkronkan secara live!");
+            });
+        }
+    </script>
+</body>
+</html>
